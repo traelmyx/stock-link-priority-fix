@@ -140,20 +140,20 @@ public class StockLinkTests {
 		});
 	}
 
-	/** End to end: a real 16-cobblestone order with B preferred is taken from B's chest and leaves A's alone. */
+	/** End to end: a real 16-cobblestone order with A preferred is taken from A's chest and leaves B's alone (Create would list B first). */
 	@GameTest(template = "empty", timeoutTicks = 300, batch = "e2e")
 	public static void realOrderTakesFromPriorityChest(GameTestHelper helper) {
 		StockLinkPriorityFix.enabled = true;
 		UUID network = build(helper, false);
 		helper.runAfterDelay(40, () -> {
-			link(helper, LINK_A).redstonePowerChanged(8);
-			link(helper, LINK_B).redstonePowerChanged(0);
+			link(helper, LINK_A).redstonePowerChanged(0);
+			link(helper, LINK_B).redstonePowerChanged(8);
 			helper.assertTrue(LogisticsManager.broadcastPackageRequest(network, RequestType.PLAYER, order(16), null, "test"), "order refused");
 		});
 		helper.runAfterDelay(100, () -> {
 			int a = cobblestone(helper, CHEST_A), b = cobblestone(helper, CHEST_B);
 			System.out.printf("[stock_link_priority_fix] after a 16 order: A %d, B %d%n", a, b);
-			helper.assertTrue(a == 64 && b == 48, "expected A 64 / B 48, got A " + a + " / B " + b);
+			helper.assertTrue(a == 48 && b == 64, "expected A 48 / B 64, got A " + a + " / B " + b);
 			helper.succeed();
 		});
 	}
