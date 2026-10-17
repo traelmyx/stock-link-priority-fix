@@ -2,18 +2,16 @@ package io.github.traelmyx.stocklinkpriorityfix.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.logistics.packagerLink.LogisticallyLinkedBehaviour;
 import com.simibubi.create.content.logistics.packagerLink.LogisticsManager;
 import io.github.traelmyx.stocklinkpriorityfix.StockLinkPriorityFix;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -38,12 +36,13 @@ public abstract class LogisticsManagerMixin {
 		return top.get(ThreadLocalRandom.current().nextInt(top.size()));
 	}
 
-	// The picked links are about to be asked one by one; put them back in priority order (stable, so equal ones keep theirs).
-	@Inject(method = "findPackagersForRequest", require = 1,
-		at = @At(value = "NEW", target = "org/apache/commons/lang3/mutable/MutableBoolean", ordinal = 0))
-	private static void stock_link_priority_fix$sortByPriority(CallbackInfoReturnable<?> cir,
-		@Local(name = "availableLinks") List<Object> availableLinks) {
+	// The picked links are about to be asked one by one (the loop over them is the method's second List.iterator() call);
+	// put them back in priority order first. The sort is stable, so links with equal priority keep their order.
+	@WrapOperation(method = "findPackagersForRequest", require = 1,
+		at = @At(value = "INVOKE", target = "Ljava/util/List;iterator()Ljava/util/Iterator;", ordinal = 1))
+	private static Iterator<Object> stock_link_priority_fix$sortByPriority(List<Object> availableLinks, Operation<Iterator<Object>> original) {
 		if (StockLinkPriorityFix.enabled)
 			availableLinks.sort(stock_link_priority_fix$byPriority);
+		return original.call(availableLinks);
 	}
 }
