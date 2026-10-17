@@ -26,7 +26,7 @@ public abstract class LogisticsManagerMixin {
 
 	// Inside one inventory's group of links, pick among the highest-priority ones instead of any of them.
 	// require = 0: if a Create update changes this method, the fix stops working instead of crashing the game
-	@WrapOperation(method = "findPackagersForRequest", require = 0,
+	@WrapOperation(method = "findPackagersForRequest", require = 1,
 		at = @At(value = "INVOKE", target = "Ljava/util/List;get(I)Ljava/lang/Object;", ordinal = 0))
 	private static Object stock_link_priority_fix$pickInGroup(List<Object> group, int index, Operation<Object> original) {
 		if (!StockLinkPriorityFix.enabled || group.size() < 2)
@@ -39,7 +39,7 @@ public abstract class LogisticsManagerMixin {
 	}
 
 	// The picked links are about to be asked one by one; put them back in priority order (stable, so equal ones keep theirs).
-	@Inject(method = "findPackagersForRequest", require = 0,
+	@Inject(method = "findPackagersForRequest", require = 1,
 		at = @At(value = "NEW", target = "org/apache/commons/lang3/mutable/MutableBoolean", ordinal = 0))
 	private static void stock_link_priority_fix$sortByPriority(CallbackInfoReturnable<?> cir,
 		@Local(name = "availableLinks") List<Object> availableLinks) {
